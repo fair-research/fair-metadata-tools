@@ -7,6 +7,7 @@ then.
 """
 
 import json
+from gen_datacite import gen_datacite_entry
 
 
 sex = [
@@ -90,11 +91,13 @@ with open('GTEx_lung_cancer_demo_data_v2-1.csv', 'r') as gte:
             if descr[i] != '':
                 entry['content']['gtex:description']['gtex:{}'.format(field_id[i])] = descr[i]
 
+            entry['content']['gtex:datacite'] = gen_datacite_entry()
+
         gingest['ingest_data']['gmeta'].append(entry)
 
         if c % 100 == 0 and c > 0:
             fo = open('gingest/GTEx_v7_gingest_{}_{}.json'.format(c-100, c), 'w')
-            fo.write(json.dumps(gingest))
+            fo.write(json.dumps(gingest, indent=4))
             fo.close()
             gingest = {
                 "@version": "2016-11-09",
@@ -106,5 +109,5 @@ with open('GTEx_lung_cancer_demo_data_v2-1.csv', 'r') as gte:
                 }
             }
     fo = open('gingest/GTEx_v7_gingest_rest.json', 'w')
-    fo.write(json.dumps(gingest))
+    fo.write(json.dumps(gingest, indent=4))
     fo.close()
