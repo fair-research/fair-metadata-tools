@@ -3,6 +3,8 @@
 import json
 from collections import OrderedDict
 
+namespace = 'datacite:'
+
 # Defined in:
 # https://schema.datacite.org/meta/kernel-4.1/doc/DataCite-MetadataKernel_v4.1.pdf # noqa
 
@@ -51,18 +53,18 @@ DATACITE_DESCRIPTION_TYPES = ['Abstract', 'Methods', 'SeriesInformation',
 # https://schema.datacite.org/meta/kernel-4.1/doc/DataCite-MetadataKernel_v4.1.pdf  # noqa
 FIELD_GENERATORS = (
     # Occurrences identifier: 1
-    ('identifier', lambda x: {
-        'identifier_type': 'DOI',
-        'value': ''
+    (namespace + 'identifier', lambda x: {
+        namespace + 'identifier_type': 'DOI',
+        namespace + 'value': ''
     }),
     # Occurrences creator: 1-n
-    ('creators', lambda x: [{
+    (namespace + 'creators', lambda x: [{
             # Occurrences: 1
-            'creator_name': {
-                'value': name,
+            namespace + 'creator_name': {
+                namespace + 'value': name,
                 # Occurrences: 0-1
                 # Must be one of Organisational, Personal
-                'name_type': 'Personal'
+                namespace + 'name_type': 'Personal'
             },
             # # Occurrences: 0-1
             # 'given_name': 'name',
@@ -79,30 +81,30 @@ FIELD_GENERATORS = (
         } for name in ['Seo J', 'Ju YS', 'Lee W']
     ]),
     # Occurrences: 0-n
-    ('subjects', lambda x: [
-        {'value': 	'Homo sapiens'}
+    (namespace + 'subjects', lambda x: [
+        {namespace + 'value': 	'Homo sapiens'}
     ]),
     # Occurrences: 1-n
-    ('titles', lambda x: [{
-        'value': 'The transcriptional landscape and mutational '
+    (namespace + 'titles', lambda x: [{
+        namespace + 'value': 'The transcriptional landscape and mutational '
                  'profile of lung adenocarcinoma',
         # Occurrences: 0-n
-        'title_type': 'Subtitle',
+        namespace + 'title_type': 'Subtitle',
     }]),
     # Occurrences: 1
-    ('publisher', lambda x: {
-        'value': 'MD Anderson Cancer Center',
+    (namespace + 'publisher', lambda x: {
+        namespace + 'value': 'MD Anderson Cancer Center',
     }),
     # Occurrences: 1
-    ('publication_year', lambda x: {
-        'value': '2012',
+    (namespace + 'publication_year', lambda x: {
+        namespace + 'value': '2012',
     }),
     # Occurrences: 1
-    ('resource_type', lambda x: {
+    (namespace + 'resource_type', lambda x: {
         # Occurrences: 1
-        'value': 'Dataset/GSM Samples',
+        namespace + 'value': 'Dataset/GSM Samples',
         # Occurrences: 1
-        'resource_type_general': 'Dataset',
+        namespace + 'resource_type_general': 'Dataset',
     }),
     # Occurrences: 0-n
     # ('contributors', lambda x: [
@@ -129,24 +131,24 @@ FIELD_GENERATORS = (
     #     } for name in ['Seo J', 'Ju YS', 'Lee W']
     # ]),
     # Occurrences: 0-n
-    ('dates', lambda x: [
+    (namespace + 'dates', lambda x: [
             {
-                'date_type': 'Submitted',
-                'value': '2012-08-28'
+                namespace + 'date_type': 'Submitted',
+                namespace + 'value': '2012-08-28'
             },
             {
-                'date_type': 'Updated',
-                'value': '2018-06-11'
+                namespace + 'date_type': 'Updated',
+                namespace + 'value': '2018-06-11'
             },
             {
-                'date_type': 'Public',
-                'value': '2012-09-06'
+                namespace + 'date_type': 'Public',
+                namespace + 'value': '2012-09-06'
             }
         ]
      ),
     # Occurrences: 0-1
-    ('language', lambda x: {
-        'value': 'en'
+    (namespace + 'language', lambda x: {
+        namespace + 'value': 'en'
     }),
     # Occurrences: 0-n
     # ('alternate_identifiers', lambda x: [{
@@ -182,8 +184,8 @@ FIELD_GENERATORS = (
     #     } for n in range(NUM_SIZES)
     # ]),
     # Occurrences: 0-n
-    ('formats', lambda x: [
-        'SOFT', 'MINiML', 'TXT'
+    (namespace + 'formats', lambda x: [
+        namespace + 'SOFT', 'MINiML', 'TXT'
      ]),
     # Occurrences: 0-1
     # ('version', lambda x: {
@@ -196,8 +198,8 @@ FIELD_GENERATORS = (
     #     'rights_uri': ranlist(['https://opensource.org/licenses/GPL-3.0'])
     # }),
     # Occurrences: 0-n
-    ('descriptions', lambda x: {
-        'value': 'Understanding the molecular signatures of cancer is '
+    (namespace + 'descriptions', lambda x: {
+        namespace + 'value': 'Understanding the molecular signatures of cancer is '
                  'important to apply appropriate targeted therapies. Here we '
                  'present the first large scale RNA sequencing study of lung '
                  'adenocarcinoma demonstrating its power to identify somatic '
@@ -226,7 +228,7 @@ FIELD_GENERATORS = (
                  'broaden our understanding of lung adenocarcinoma and may '
                  'also lead to new diagnostic and therapeutic approaches.',
         # We'll only use Abstract for this mock data for now
-        'description_type': 'Abstract',
+        namespace + 'description_type': 'Abstract',
         # 'description_type': ranlist(DATACITE_DESCRIPTION_TYPES)
     }),
     # ('geo_location', lambda x: {
@@ -242,6 +244,12 @@ def gen_datacite_entry():
     for name, func in FIELD_GENERATORS:
         search_entry[name] = func(search_entry)
     return search_entry
+
+
+def add_datacite_entries(dict):
+    """Add Datacite Search entries."""
+    for name, func in FIELD_GENERATORS:
+        dict[name] = func(dict)
 
 
 if __name__ == '__main__':
