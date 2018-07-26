@@ -7,7 +7,7 @@ from gen_records import (
     get_organized_records, get_remote_file_manifests,
     check_urls_in_rfm_resolve_correctly)
 
-OUTPUT_FILE = 'output.json'
+OUTPUT_FILE = 'gmeta_ingest_doc.json'
 TOPMED_FILENAME = 'topmed-107.tsv'
 TOPMED_S3_BUCKET_NAME = 'cgp-commons-public'
 
@@ -61,8 +61,11 @@ if __name__ == '__main__':
         gmeta['subject'] = subject
         ingest_records.append(gmeta)
 
+    document = gingest.copy()
+    document['ingest_data']['gmeta'] = ingest_records
+
     with open(OUTPUT_FILE, 'w') as f:
-        f.write(json.dumps(ingest_records, indent=4))
+        f.write(json.dumps(document, indent=4))
         print('Wrote {} reconds to {}'.format(len(ingest_records), OUTPUT_FILE))
 
 
