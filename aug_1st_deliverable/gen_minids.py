@@ -2,7 +2,7 @@ from gen_records import get_data, get_remote_file_manifests, TOPMED_FILENAME
 import csv
 from globus_sdk import AccessTokenAuthorizer, AuthClient, SearchClient
 from concierge.api import create_bag
-from login import load_tokens
+from login import load_tokens, CONCIERGE_SCOPE_NAME
 
 SERVER = 'https://concierge.fair-research.org/'
 
@@ -38,14 +38,10 @@ def update_topmed_tsv(minids):
 
 def gen_bdbag(remote_file_manifest, title):
     tokens = load_tokens()
-    ata_ac = AccessTokenAuthorizer(tokens['auth.globus.org']['access_token'])
-    ac = AuthClient(authorizer=ata_ac)
-    user = ac.oauth2_userinfo()
-    print(user['name'], user['email'])
-    print(title)
-    minid = create_bag(SERVER, remote_file_manifest, user['name'],
-                       user['email'], title,
-                       tokens['auth.globus.org']['access_token'])
+    minid = create_bag(remote_file_manifest, 'Notused',
+                       'notused', title,
+                       tokens[CONCIERGE_SCOPE_NAME]['access_token'],
+                       server='http://localhost:8000')
     return minid
 
 
@@ -53,14 +49,14 @@ def gen_bdbag(remote_file_manifest, title):
 if __name__ == '__main__':
     data = get_data()
     # Minids tracked by NWD_ID
-    # minids = {}
-    # for d in data[0:1]:
-    #     nwd_id = d[0]['NWD_ID']
-    #     manifest = get_remote_file_manifests(d)
-    #     title = ('Topmed Public CRAM/CRAI ID Number: '
-    #              '{}, {}'.format(nwd_id, d[0]['HapMap_1000G_ID']))
-    #     minid = gen_bdbag(manifest, title)
-    #     minids[nwd_id] = minid['minid_id']
+    minids = {}
+    for d in data[0:1]:
+        nwd_id = d[0]['NWD_ID']
+        manifest = get_remote_file_manifests(d)
+        title = ('Topmed Public CRAM/CRAI ID Number: '
+                 '{}, {}'.format(nwd_id, d[0]['HapMap_1000G_ID']))
+        minid = gen_bdbag(manifest, title)
+        minids[nwd_id] = minid['minid_id']
 
-    minids = {'NWD285363': 'ark:/57799/b9jx3g'}
+    # minids = {'NWD285363': 'ark:/57799/b9jx3g'}
     update_topmed_tsv(minids)
