@@ -2,7 +2,9 @@ import globus_sdk
 import json
 
 CLIENT_ID = '61f6ddd6-ef14-4a3b-b6fa-cfbdbc2e00de'
-SCOPES = ['email profile openid '
+CONCIERGE_SCOPE_NAME = '524361f2-e4a9-4bd0-a3a6-03e365cac8a9'
+SCOPES = ['https://auth.globus.org/scopes/'
+          '524361f2-e4a9-4bd0-a3a6-03e365cac8a9/concierge',
           'urn:globus:auth:scope:search.api.globus.org:all']
 TEMP_CREDS = 'search_ingest_tokens.json'
 
@@ -25,6 +27,9 @@ def load_tokens():
         print('Saved creds to "{}" for future ingests.'.format(TEMP_CREDS))
     return tokens
 
-    # auth = globus_sdk.AccessTokenAuthorizer(tokens['search.api.globus.org']
-    #                                         ['access_token'])
-    # return globus_sdk.SearchClient(authorizer=auth)
+
+def load_search_client():
+    tokens = load_tokens()
+    auth = globus_sdk.AccessTokenAuthorizer(tokens['search.api.globus.org']
+                                            ['access_token'])
+    return globus_sdk.SearchClient(authorizer=auth)
