@@ -63,7 +63,7 @@ def get_remote_file_manifests(record):
     :return:
     """
     s3_prefix = 's3://cgp-commons-public/topmed_open_access/'
-    http_prefix = ('http://cgp-commons-public.s3.amazonaws.com/'
+    http_prefix = ('https://cgp-commons-public.s3.amazonaws.com/'
                    'topmed_open_access/')
     rfms = []
     for file_info in record:
