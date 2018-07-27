@@ -45,12 +45,17 @@ def gen_bdbag(remote_file_manifest, title):
     return minid
 
 
-
-if __name__ == '__main__':
+def main():
     data = get_data()
-    # Minids tracked by NWD_ID
+    user_input = input('Create {} new minids? Y/N> '.format(len(data)))
+    if user_input not in ['yes', 'Y', 'y', 'yarr']:
+        print('Aborting!')
+        return
+    else:
+        print('This should take 5 minutes...')
+
     minids = {}
-    for d in data[0:1]:
+    for d in data:
         nwd_id = d[0]['NWD_ID']
         manifest = get_remote_file_manifests(d)
         title = ('Topmed Public CRAM/CRAI ID Number: '
@@ -58,5 +63,8 @@ if __name__ == '__main__':
         minid = gen_bdbag(manifest, title)
         minids[nwd_id] = minid['minid_id']
 
-    # minids = {'NWD285363': 'ark:/57799/b9jx3g'}
     update_topmed_tsv(minids)
+
+
+if __name__ == '__main__':
+    main()
