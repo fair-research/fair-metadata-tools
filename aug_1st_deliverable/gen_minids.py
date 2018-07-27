@@ -5,18 +5,18 @@ from concierge.api import create_bag
 from login import load_tokens, CONCIERGE_SCOPE_NAME
 
 SERVER = 'https://concierge.fair-research.org/'
+TSV_COLUMNS = ['NWD_ID', 'HapMap_1000G_ID', 'SEQ_CTR', 'Google_URL',
+               'S3_URL', 'Argon_GUID', 'Calcium_GUID', 'Helium_GUID',
+               'Xenon_GUID', 'DOS_URI', 'CRAI_URL', 'md5sum', 'Assignment']
+NWD_ID, S3_URL, ARGON_GUID = (
+    TSV_COLUMNS.index('NWD_ID'),
+    TSV_COLUMNS.index('S3_URL'),
+    TSV_COLUMNS.index('Argon_GUID')
+)
 
 
 def update_topmed_tsv(minids):
     """Parse the tsv and return record info"""
-    TSV_COLUMNS = ['NWD_ID', 'HapMap_1000G_ID', 'SEQ_CTR', 'Google_URL',
-                   'S3_URL', 'Argon_GUID', 'Calcium_GUID', 'Helium_GUID',
-                   'Xenon_GUID', 'DOS_URI', 'CRAI_URL', 'md5sum', 'Assignment']
-    NWD_ID, S3_URL, ARGON_GUID = (
-        TSV_COLUMNS.index('NWD_ID'),
-        TSV_COLUMNS.index('S3_URL'),
-        TSV_COLUMNS.index('Argon_GUID')
-    )
 
     rows = []
     with open(TOPMED_FILENAME) as t:
@@ -43,6 +43,40 @@ def gen_bdbag(remote_file_manifest, title):
                        tokens[CONCIERGE_SCOPE_NAME]['access_token'],
                        server='http://localhost:8000')
     return minid
+
+
+def rebase_topmed(theirs_filename, ours=TOPMED_FILENAME):
+
+    """Apply new minid changes to a diffing topmed file from our own"""
+    with open(ours) as otf, open(theirs_filename) as ttf:
+        our_tsv = csv.reader(otf, delimiter='\t')
+        their_tsv = csv.reader(ttf, delimiter='\t')
+        ourrows = [r for r in our_tsv]
+        theirrows = [r for r in their_tsv]
+
+
+        if len(ourrows) != len(theirrows):
+            print('Lines in files differ -- Ours: {} theirs: {}'.format(
+                len(ourrows), len(theirrows)
+            ))
+            return
+
+        output_rows = []
+        changed = 0
+        for ourr, theirr in zip(ourrows, theirrows):
+            if ourr[ARGON_GUID].startswith('ark') and \
+               ourr[ARGON_GUID] != theirr[ARGON_GUID]:
+
+                theirr[ARGON_GUID] = ourr[ARGON_GUID]
+                print('.', end='')
+                changed += 1
+            output_rows.append(theirr)
+        print('\nRecords Changed: {}'.format(changed))
+
+    with open('rebased_topmed.tsv', 'w') as t:
+        tout = csv.writer(t, delimiter='\t', lineterminator='\n')
+        for row in output_rows:
+            tout.writerow(row)
 
 
 def main():
