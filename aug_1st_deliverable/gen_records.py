@@ -7,13 +7,21 @@ import boto3
 RAW_RECORD_OUTPUT = 'data/GEN_RECORDS_OUTPUT.json'
 TOPMED_FILENAME = 'topmed-107.tsv'
 TOPMED_S3_BUCKET_NAME = 'cgp-commons-public'
+TOPMED_S3_DOWNSAMPLED = 'topmed-workflow-testing'
+
+# Which bucket are we using?
+CURRENT_BUCKET = TOPMED_S3_DOWNSAMPLED
+
 
 
 def parse_topmed(topmed_filename):
     """Parse the tsv and return record info"""
+    # TSV_COLUMNS = ['NWD_ID', 'HapMap_1000G_ID', 'SEQ_CTR', 'Google_URL',
+    #                'S3_URL', 'Argon_GUID', 'Calcium_GUID', 'Helium_GUID',
+    #                'Xenon_GUID', 'DOS_URI', 'CRAI_URL', 'md5sum', 'Assignment']
     TSV_COLUMNS = ['NWD_ID', 'HapMap_1000G_ID', 'SEQ_CTR', 'Google_URL',
-                   'S3_URL', 'Argon_GUID', 'Calcium_GUID', 'Helium_GUID',
-                   'Xenon_GUID', 'DOS_URI', 'CRAI_URL', 'md5sum', 'Assignment']
+                   'AWS_URL', 'Calcium_GUID', 'DOS_URI', 'CRAI_URL', 'md5sum',
+                   'File size', 'Calcium_realigned_md5sum']
 
     with open(topmed_filename) as t:
         tin = csv.reader(t, delimiter='\t')
@@ -21,7 +29,7 @@ def parse_topmed(topmed_filename):
 
         # Remove all non-real records by checking that the s3 link looks valid
         filtered_info = [item for item in tsv_info
-                         if item['S3_URL'].startswith('s3://')]
+                         if item['AWS_URL'].startswith('s3://')]
         return filtered_info
 
 
@@ -37,11 +45,14 @@ def get_topmed_s3_file_info(bucket_name):
 def get_organized_records():
     """Get records and set the record size from info in s3 buckets"""
     topmed_records = parse_topmed(TOPMED_FILENAME)
-    s3info = get_topmed_s3_file_info(TOPMED_S3_BUCKET_NAME)
+    s3info = get_topmed_s3_file_info(CURRENT_BUCKET)
+
+    # from pprint import pprint
+    # pprint(s3info)
 
     # Get the size so we can generate remote file manifests
     for rec in topmed_records:
-        s3_filename = os.path.basename(rec['S3_URL'])
+        s3_filename = os.path.basename(rec['AWS_URL'])
         rec['size'] = s3info[s3_filename]['Size']
 
 
@@ -62,12 +73,17 @@ def get_remote_file_manifests(record):
     :param record:
     :return:
     """
-    s3_prefix = 's3://cgp-commons-public/topmed_open_access/'
-    http_prefix = ('https://cgp-commons-public.s3.amazonaws.com/'
-                   'topmed_open_access/')
+    if CURRENT_BUCKET == TOPMED_S3_BUCKET_NAME:
+        s3_prefix = 's3://cgp-commons-public/topmed_open_access/'
+        http_prefix = ('https://cgp-commons-public.s3.amazonaws.com/'
+                       'topmed_open_access/')
+    else:
+        s3_prefix = 's3://topmed-workflow-testing/topmed-aligner/'
+        http_prefix = ('https://topmed-workflow-testing.s3.amazonaws.com/'
+                       'topmed-aligner/')
     rfms = []
     for file_info in record:
-        file_path = file_info['S3_URL'].replace(s3_prefix, '')
+        file_path = file_info['AWS_URL'].replace(s3_prefix, '')
         rfms.append({
             'url': '{}{}'.format(http_prefix, file_path),
             'length': file_info['size'],

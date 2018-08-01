@@ -92,12 +92,14 @@ def main():
     for d in data:
         nwd_id = d[0]['NWD_ID']
         manifest = get_remote_file_manifests(d)
-        title = ('Topmed Public CRAM/CRAI ID Number: '
+        title = ('Downsample CRAM/CRAI ID Number: '
                  '{}, {}'.format(nwd_id, d[0]['HapMap_1000G_ID']))
         minid = gen_bdbag(manifest, title)
         minids[nwd_id] = minid['minid_id']
 
-    update_topmed_tsv(minids)
+    from pprint import pprint
+    pprint(minids)
+    #update_topmed_tsv(minids)
 
 
 if __name__ == '__main__':

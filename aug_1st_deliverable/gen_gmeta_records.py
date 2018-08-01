@@ -29,10 +29,15 @@ entry = {
 
 # Unique fields are different for each cram/crai file, and get their own
 # section within each index entry
-UNIQUE_FIELDS = ['Google_URL', 'S3_URL', 'Calcium_GUID', 'Helium_GUID',
-                 'Xenon_GUID', 'DOS_URI', 'CRAI_URL', 'md5sum', 'size']
-NON_UNIQUE_FIELDS = ['NWD_ID', 'HapMap_1000G_ID', 'SEQ_CTR', 'Argon_GUID',
-                     'Assignment']
+UNIQUE_FIELDS = ['Google_URL', 'AWS_URL', 'Calcium_GUID', 'DOS_URI',
+                 'CRAI_URL', 'md5sum', 'File size', 'Calcium_realigned_md5sum']
+NON_UNIQUE_FIELDS = ['NWD_ID', 'HapMap_1000G_ID', 'SEQ_CTR']
+
+MINIDS = {'NWD119836': 'ark:/99999/fk4cAzlMXIUOfes',
+ 'NWD136397': 'ark:/99999/fk456x1jMoFxfKB',
+ 'NWD176325': 'ark:/99999/fk4U4TyRAKafWMB',
+ 'NWD231092': 'ark:/99999/fk4jVBacAVBkFsL',
+ 'NWD315403': 'ark:/99999/fk41FSiqz9iY58R1'}
 
 
 if __name__ == '__main__':
@@ -50,12 +55,13 @@ if __name__ == '__main__':
             cram, crai = crai, cram
 
         irecord = OrderedDict([(f, cram[f]) for f in NON_UNIQUE_FIELDS])
+        irecord['test_data'] = 'downsampled'
+        irecord['Argon_GUID'] = MINIDS[irecord['NWD_ID']]
         irecord['cram'] = OrderedDict([(f, cram[f]) for f in UNIQUE_FIELDS])
         irecord['crai'] = OrderedDict([(f, crai[f]) for f in UNIQUE_FIELDS])
         irecord['remote_file_manifest'] = manifest
         url = urlparse(manifest[0]['url'])
-        subject = '{}://{}{}'.format(url.scheme, url.netloc,
-                                     os.path.dirname(url.path))
+        subject = '{}://{}{}'.format(url.scheme, url.netloc, url.path)
         gmeta = entry.copy()
         gmeta['content'] = irecord
         gmeta['subject'] = subject
