@@ -33,3 +33,8 @@ def load_search_client():
     auth = globus_sdk.AccessTokenAuthorizer(tokens['search.api.globus.org']
                                             ['access_token'])
     return globus_sdk.SearchClient(authorizer=auth)
+
+
+if __name__ == '__main__':
+    # Force login check
+    load_tokens()

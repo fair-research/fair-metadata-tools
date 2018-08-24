@@ -7,7 +7,6 @@ You must have access to a search index for this to work.
 """
 import json
 import globus_sdk
-
 from login import load_tokens
 
 # 'nihcommons-topmed' index

@@ -3,8 +3,9 @@ from collections import OrderedDict
 from urllib.parse import urlparse
 import json
 
-from gen_records import RAW_RECORD_OUTPUT
+from gen_records import RAW_RECORD_OUTPUT, check_urls_in_rfm_resolve_correctly
 
+CHECK_RECORDS = True
 OUTPUT_FILE = 'gmeta_ingest_doc.json'
 
 gingest = {
@@ -38,7 +39,10 @@ def get_records():
 def gen_gmeta():
     records = get_records()
     # Note: This hammers the s3 server with 200+ HEAD requests
-    # check_urls_in_rfm_resolve_correctly(records)
+    if CHECK_RECORDS:
+        print('Note: CHECK_RECORDS makes a lot of requests to s3.')
+        print('Checking Records resolve correctly...')
+        check_urls_in_rfm_resolve_correctly(records)
 
     ingest_records = []
     for r in records:
@@ -69,6 +73,6 @@ if __name__ == '__main__':
     records = get_records()
     with open(OUTPUT_FILE, 'w') as f:
         f.write(json.dumps(document, indent=4))
-        print('Wrote {} reconds to {}'.format(len(records), OUTPUT_FILE))
+        print('Wrote {} records to {}'.format(len(records), OUTPUT_FILE))
 
 
