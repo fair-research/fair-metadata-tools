@@ -5,8 +5,25 @@ import grequests
 import boto3
 
 RAW_RECORD_OUTPUT = 'data/GEN_RECORDS_OUTPUT.json'
-TOPMED_FILENAME = 'topmed-107.tsv'
-TOPMED_S3_BUCKET_NAME = 'cgp-commons-public'
+inputs = {
+    'topmed': {
+        'filename': 'topmed-107.tsv',
+        'bucket': 'cgp-commons-public',
+        'bucket_s3_prefix': 's3://cgp-commons-public/topmed_open_access/',
+        'bucket_http_prefix': ('https://cgp-commons-public.s3.amazonaws.com/'
+                               'topmed_open_access/')
+    },
+    'downsample': {
+        'filename': 'topmed-downsampled.tsv',
+        'bucket': 'topmed-workflow-testing',
+
+        'bucket_s3_prefix': 's3://topmed-workflow-testing/topmed-aligner/',
+        'bucket_http_prefix': 'https://topmed-workflow-testing'
+                              '.s3.amazonaws.com/topmed-aligner/',
+        'extras': {'Assignment': 'Downsample'}
+    }
+
+}
 
 
 def parse_topmed(topmed_filename):
@@ -34,10 +51,10 @@ def get_topmed_s3_file_info(bucket_name):
     return mapped_objects
 
 
-def get_organized_records():
+def get_organized_records(sample_metadata):
     """Get records and set the record size from info in s3 buckets"""
-    topmed_records = parse_topmed(TOPMED_FILENAME)
-    s3info = get_topmed_s3_file_info(TOPMED_S3_BUCKET_NAME)
+    topmed_records = parse_topmed(sample_metadata['filename'])
+    s3info = get_topmed_s3_file_info(sample_metadata['bucket'])
 
     # Get the size so we can generate remote file manifests
     for rec in topmed_records:
@@ -50,11 +67,14 @@ def get_organized_records():
     for rid in record_ids:
         collected_records.append([r for r in topmed_records
                                  if r['NWD_ID'] == rid])
-    return collected_records
+
+    rfms = [get_remote_file_manifests(r, sample_metadata)
+            for r in collected_records]
+    records = list(zip(collected_records, rfms))
+    return records
 
 
-
-def get_remote_file_manifests(record):
+def get_remote_file_manifests(record, sample_metadata):
     """
     Build these:
 
@@ -62,9 +82,12 @@ def get_remote_file_manifests(record):
     :param record:
     :return:
     """
-    s3_prefix = 's3://cgp-commons-public/topmed_open_access/'
-    http_prefix = ('https://cgp-commons-public.s3.amazonaws.com/'
-                   'topmed_open_access/')
+    # s3 = 's3://topmed-workflow-testing/topmed-aligner/input-files/NWD231092.0005.recab.cram'
+    # s3_prefix = 's3://cgp-commons-public/topmed_open_access/'
+    # http_prefix = ('https://cgp-commons-public.s3.amazonaws.com/'
+    #                'topmed_open_access/')
+    s3_prefix = sample_metadata['bucket_s3_prefix']
+    http_prefix = sample_metadata['bucket_http_prefix']
     rfms = []
     for file_info in record:
         file_path = file_info['S3_URL'].replace(s3_prefix, '')
@@ -83,7 +106,7 @@ def check_urls_in_rfm_resolve_correctly(records):
     links we build point to real files.
     :return:
     """
-    rfms = [get_remote_file_manifests(r) for r in records]
+    rfms = [r[1] for r in records]
 
 
     urls, file_lengths = [], []
@@ -121,7 +144,14 @@ def check_urls_in_rfm_resolve_correctly(records):
 def get_data():
     """Contains a list of all topmed datasets. Each set contains two files,
     the cram file and the crai file. Does not include remote file manifests"""
-    records = get_organized_records()
+    records = []
+
+    for sample in inputs.values():
+        recs = get_organized_records(sample)
+        for rs, rfm in recs:
+            for entry in rs:
+                entry.update(sample.get('extras', {}))
+        records.extend(recs)
     return records
 
 
@@ -135,5 +165,10 @@ if __name__ == '__main__':
 
     with open(RAW_RECORD_OUTPUT, 'w') as f:
         f.write(json.dumps(data, indent=4))
-    print('Wrote {} Records to {}.'.format(len(data), RAW_RECORD_OUTPUT))
+    print('Wrote {} Records to {} using data from {}'
+          ''.format(len(data),
+                    RAW_RECORD_OUTPUT,
+                    ', '.join(inputs.keys())
+                    )
+          )
 

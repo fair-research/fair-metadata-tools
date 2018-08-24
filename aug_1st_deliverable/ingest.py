@@ -14,7 +14,7 @@ from login import load_tokens
 INDEX = 'd740440b-4f0f-4687-9573-0a7ce2ceda22'
 SEARCH_DATA = 'gmeta_ingest_doc.json'
 
-def main():
+def ingest():
     with open(SEARCH_DATA) as f:
         ingest_doc = json.loads(f.read())
 
@@ -36,4 +36,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    ingest()

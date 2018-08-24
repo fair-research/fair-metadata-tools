@@ -1,10 +1,8 @@
 from gen_records import get_data, get_remote_file_manifests, TOPMED_FILENAME
 import csv
-from globus_sdk import AccessTokenAuthorizer, AuthClient, SearchClient
 from concierge.api import create_bag
 from login import load_tokens, CONCIERGE_SCOPE_NAME
 
-SERVER = 'https://concierge.fair-research.org/'
 TSV_COLUMNS = ['NWD_ID', 'HapMap_1000G_ID', 'SEQ_CTR', 'Google_URL',
                'S3_URL', 'Argon_GUID', 'Calcium_GUID', 'Helium_GUID',
                'Xenon_GUID', 'DOS_URI', 'CRAI_URL', 'md5sum', 'Assignment']
@@ -38,10 +36,10 @@ def update_topmed_tsv(minids):
 
 def gen_bdbag(remote_file_manifest, title):
     tokens = load_tokens()
-    minid = create_bag(remote_file_manifest, 'Notused',
-                       'notused', title,
+    minid = create_bag(remote_file_manifest,
                        tokens[CONCIERGE_SCOPE_NAME]['access_token'],
-                       server='http://localhost:8000')
+                       metadata = {'title': title}
+                       )
     return minid
 
 

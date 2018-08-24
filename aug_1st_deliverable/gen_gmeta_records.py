@@ -3,13 +3,9 @@ from collections import OrderedDict
 from urllib.parse import urlparse
 import json
 
-from gen_records import (
-    get_organized_records, get_remote_file_manifests,
-    check_urls_in_rfm_resolve_correctly)
+from gen_records import RAW_RECORD_OUTPUT
 
 OUTPUT_FILE = 'gmeta_ingest_doc.json'
-TOPMED_FILENAME = 'topmed-107.tsv'
-TOPMED_S3_BUCKET_NAME = 'cgp-commons-public'
 
 gingest = {
     "@version": "2016-11-09",
@@ -34,13 +30,15 @@ UNIQUE_FIELDS = ['Google_URL', 'S3_URL', 'Calcium_GUID', 'Helium_GUID',
 NON_UNIQUE_FIELDS = ['NWD_ID', 'HapMap_1000G_ID', 'SEQ_CTR', 'Argon_GUID',
                      'Assignment']
 
+def get_records():
+    with open(RAW_RECORD_OUTPUT) as f:
+        records = json.loads(f.read())
+    return records
 
-if __name__ == '__main__':
-    records = get_organized_records()
+def gen_gmeta():
+    records = get_records()
     # Note: This hammers the s3 server with 200+ HEAD requests
     # check_urls_in_rfm_resolve_correctly(records)
-    rfms = [get_remote_file_manifests(r) for r in records]
-    records = list(zip(records, rfms))
 
     ingest_records = []
     for r in records:
@@ -63,9 +61,14 @@ if __name__ == '__main__':
 
     document = gingest.copy()
     document['ingest_data']['gmeta'] = ingest_records
+    return document
 
+
+if __name__ == '__main__':
+    document = gen_gmeta()
+    records = get_records()
     with open(OUTPUT_FILE, 'w') as f:
         f.write(json.dumps(document, indent=4))
-        print('Wrote {} reconds to {}'.format(len(ingest_records), OUTPUT_FILE))
+        print('Wrote {} reconds to {}'.format(len(records), OUTPUT_FILE))
 
 
