@@ -1,10 +1,10 @@
 from gen_records import get_data, SAMPLES
 import sys
 import csv
-from concierge.api import create_bag
+from concierge.api import bag_create
 from login import load_tokens, CONCIERGE_SCOPE_NAME
 
-PRODUCTION_MINIDS = False
+PRODUCTION_MINIDS = True
 
 
 def update_topmed_tsv(minids, sample_metadata):
@@ -37,12 +37,14 @@ def update_topmed_tsv(minids, sample_metadata):
         for row in rows:
             tout.writerow(row)
 
-def gen_bdbag(remote_file_manifest, title):
+def gen_bdbag(remote_file_manifest, title, bag_name):
     tokens = load_tokens()
-    minid = create_bag(remote_file_manifest,
+    minid = bag_create(remote_file_manifest,
                        tokens[CONCIERGE_SCOPE_NAME]['access_token'],
                        minid_metadata={'title': title},
-                       test=(not PRODUCTION_MINIDS)
+                       minid_test=(not PRODUCTION_MINIDS),
+                       bag_name=bag_name,
+                       # server='http://localhost:8000'
                        )
     return minid
 
@@ -82,7 +84,7 @@ def rebase_topmed(theirs_filename, ours):
 
 
 def main():
-    data = get_data()[0:1]
+    data = get_data()
     user_input = input('Create {} new minids? Y/N> '.format(len(data)))
     if user_input not in ['yes', 'Y', 'y', 'yarr']:
         print('Aborting!')
@@ -95,9 +97,13 @@ def main():
         record, manifest = d
         nwd_id = record[0]['NWD_ID']
         hm_id = record[0]['HapMap_1000G_ID']
-        title = ('Topmed Public CRAM/CRAI ID Number: {}, {}'.format(nwd_id,
-                                                                    hm_id))
-        minid = gen_bdbag(manifest, title)
+        if record[0]['Assignment'] == 'Downsample':
+            title = 'Topmed Downsample NWD-ID {}'.format(nwd_id)
+            bag_name = 'Topmed_Downsample_NWD_ID_'.format(nwd_id)
+        else:
+            title = 'Topmed Public NWD-ID {}'.format(nwd_id)
+            bag_name = 'Topmed_Public_NWD_ID_'.format(nwd_id)
+        minid = gen_bdbag(manifest, title, bag_name)
         print('.', end='')
         sys.stdout.flush()
         minids[nwd_id] = minid['minid']

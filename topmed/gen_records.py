@@ -65,10 +65,16 @@ def get_organized_records(sample_metadata):
     s3info = get_topmed_s3_file_info(sample_metadata['bucket'])
     s3_name = sample_metadata['s3_name']
 
-    # Get the size so we can generate remote file manifests
     for rec in topmed_records:
+        # Get the size so we can generate remote file manifests
         s3_filename = os.path.basename(rec[s3_name])
         rec['size'] = s3info[s3_filename]['Size']
+
+        # Set the minid field if it doesn't exist
+        rec['Argon_GUID'] = rec.get('Argon_GUID', '')
+        rec['Xenon_GUID'] = rec.get('Xenon_GUID', '')
+        if not rec.get('S3_URL'):
+            rec['S3_URL'] = rec[s3_name]
 
 
     record_ids = {r['NWD_ID'] for r in topmed_records}
