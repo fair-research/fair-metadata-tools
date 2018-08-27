@@ -24,7 +24,9 @@ def update_topmed_tsv(minids, sample_metadata):
                 minid = minids.get(row[NWD_ID], '')
                 if minid:
                     if len(row) >= ARGON_GUID:
-                        print('APPENDING MINID')
+                        print('Appending "{}" for "{}"'.format(
+                              minid, row[NWD_ID]
+                        ))
                         row.append(minid)
                     else:
                         print('Replacing "{}" with "{}" for {}'.format(
@@ -85,6 +87,7 @@ def rebase_topmed(theirs_filename, ours):
 
 def main():
     data = get_data()
+    print('Settings: \n\tUse Production Minids? {}'.format(PRODUCTION_MINIDS))
     user_input = input('Create {} new minids? Y/N> '.format(len(data)))
     if user_input not in ['yes', 'Y', 'y', 'yarr']:
         print('Aborting!')
@@ -99,10 +102,10 @@ def main():
         hm_id = record[0]['HapMap_1000G_ID']
         if record[0]['Assignment'] == 'Downsample':
             title = 'Topmed Downsample NWD-ID {}'.format(nwd_id)
-            bag_name = 'Topmed_Downsample_NWD_ID_'.format(nwd_id)
+            bag_name = 'Topmed_Downsample_NWD_ID_{}'.format(nwd_id)
         else:
             title = 'Topmed Public NWD-ID {}'.format(nwd_id)
-            bag_name = 'Topmed_Public_NWD_ID_'.format(nwd_id)
+            bag_name = 'Topmed_Public_NWD_ID_{}'.format(nwd_id)
         minid = gen_bdbag(manifest, title, bag_name)
         print('.', end='')
         sys.stdout.flush()
