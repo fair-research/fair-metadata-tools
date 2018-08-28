@@ -5,7 +5,7 @@ import json
 
 from gen_records import RAW_RECORD_OUTPUT, check_urls_in_rfm_resolve_correctly
 
-CHECK_RECORDS = True
+CHECK_RECORDS = False
 OUTPUT_FILE = 'gmeta_ingest_doc.json'
 
 gingest = {
@@ -29,7 +29,7 @@ entry = {
 UNIQUE_FIELDS = ['Google_URL', 'S3_URL', 'Calcium_GUID', 'Helium_GUID',
                  'Xenon_GUID', 'DOS_URI', 'CRAI_URL', 'md5sum', 'size']
 NON_UNIQUE_FIELDS = ['NWD_ID', 'HapMap_1000G_ID', 'SEQ_CTR', 'Argon_GUID',
-                     'Assignment']
+                     'Assignment', 'test_data']
 
 def get_records():
     with open(RAW_RECORD_OUTPUT) as f:
@@ -51,13 +51,14 @@ def gen_gmeta():
         if cram['CRAI_URL'] == 'crai':
             cram, crai = crai, cram
 
-        irecord = OrderedDict([(f, cram[f]) for f in NON_UNIQUE_FIELDS])
+        irecord = OrderedDict([(f, cram[f]) for f in NON_UNIQUE_FIELDS
+                               if cram.get(f)])
         irecord['cram'] = OrderedDict([(f, cram[f]) for f in UNIQUE_FIELDS])
         irecord['crai'] = OrderedDict([(f, crai[f]) for f in UNIQUE_FIELDS])
         irecord['remote_file_manifest'] = manifest
         url = urlparse(manifest[0]['url'])
         subject = '{}://{}{}'.format(url.scheme, url.netloc,
-                                     os.path.dirname(url.path))
+                                     url.path.split('.')[0])
         gmeta = entry.copy()
         gmeta['content'] = irecord
         gmeta['subject'] = subject

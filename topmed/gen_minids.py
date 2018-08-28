@@ -5,6 +5,9 @@ from concierge.api import bag_create
 from login import load_tokens, CONCIERGE_SCOPE_NAME
 
 PRODUCTION_MINIDS = True
+# Limit minid creation to this number Only. set to '0' to turn off limiting.
+LIMIT_NUMBER = 0
+SAMPLE_TYPE = 'topmed'
 
 
 def update_topmed_tsv(minids, sample_metadata):
@@ -23,7 +26,7 @@ def update_topmed_tsv(minids, sample_metadata):
             if row[S3_URL].startswith('s3://'):
                 minid = minids.get(row[NWD_ID], '')
                 if minid:
-                    if len(row) >= ARGON_GUID:
+                    if len(row) < ARGON_GUID:
                         print('Appending "{}" for "{}"'.format(
                               minid, row[NWD_ID]
                         ))
@@ -87,7 +90,10 @@ def rebase_topmed(theirs_filename, ours):
 
 def main():
     data = get_data()
+    if LIMIT_NUMBER is not 0:
+        data = data[0:LIMIT_NUMBER]
     print('Settings: \n\tUse Production Minids? {}'.format(PRODUCTION_MINIDS))
+    print('\tLimit Creation to: {}'.format(LIMIT_NUMBER or 'No Limit'))
     user_input = input('Create {} new minids? Y/N> '.format(len(data)))
     if user_input not in ['yes', 'Y', 'y', 'yarr']:
         print('Aborting!')
@@ -111,7 +117,7 @@ def main():
         sys.stdout.flush()
         minids[nwd_id] = minid['minid']
     print('\n')
-    update_topmed_tsv(minids, SAMPLES['downsample'])
+    update_topmed_tsv(minids, SAMPLES[SAMPLE_TYPE])
 
 
 if __name__ == '__main__':
