@@ -7,29 +7,39 @@ from pprint import pprint
 
 RAW_RECORD_OUTPUT = 'data/GEN_RECORDS_OUTPUT.json'
 SAMPLES = {
-    'topmed': {
-        'filename': 'topmed-107.tsv',
-        'bucket': 'cgp-commons-public',
-        'bucket_s3_prefix': 's3://cgp-commons-public/topmed_open_access/',
-        'bucket_http_prefix': ('https://cgp-commons-public.s3.amazonaws.com/'
-                               'topmed_open_access/'),
-        'columns': ['NWD_ID', 'HapMap_1000G_ID', 'SEQ_CTR', 'Google_URL',
-                   'S3_URL', 'Argon_GUID', 'Calcium_GUID', 'Helium_GUID',
-                   'Xenon_GUID', 'DOS_URI', 'CRAI_URL', 'md5sum', 'Assignment'],
-        's3_name': 'S3_URL',
-    },
-    'downsample': {
-        'filename': 'topmed-downsampled.tsv',
-        'bucket': 'topmed-workflow-testing',
-        'bucket_s3_prefix': 's3://topmed-workflow-testing/topmed-aligner/',
-        'bucket_http_prefix': 'https://topmed-workflow-testing'
-                              '.s3.amazonaws.com/topmed-aligner/',
-        'columns': ['NWD_ID', 'HapMap_1000G_ID', 'SEQ_CTR', 'Google_URL',
-                    'AWS_URL', 'Calcium_GUID', 'Helium_GUID', 'DOS_URI',
-                    'CRAI_URL', 'md5sum', 'File size',
-                    'Calcium_realigned_md5sum', 'Argon_GUID'],
+    # 'topmed': {
+    #     'filename': 'topmed-107.tsv',
+    #     'bucket': 'cgp-commons-public',
+    #     'bucket_s3_prefix': 's3://cgp-commons-public/topmed_open_access/',
+    #     'bucket_http_prefix': ('https://cgp-commons-public.s3.amazonaws.com/'
+    #                            'topmed_open_access/'),
+    #     'columns': ['NWD_ID', 'HapMap_1000G_ID', 'SEQ_CTR', 'Google_URL',
+    #                'S3_URL', 'Argon_GUID', 'Calcium_GUID', 'Helium_GUID',
+    #                'Xenon_GUID', 'DOS_URI', 'CRAI_URL', 'md5sum', 'Assignment'],
+    #     's3_name': 'S3_URL',
+    # },
+    # 'downsample': {
+    #     'filename': 'topmed-downsampled.tsv',
+    #     'bucket': 'topmed-workflow-testing',
+    #     'bucket_s3_prefix': 's3://topmed-workflow-testing/topmed-aligner/',
+    #     'bucket_http_prefix': 'https://topmed-workflow-testing'
+    #                           '.s3.amazonaws.com/topmed-aligner/',
+    #     'columns': ['NWD_ID', 'HapMap_1000G_ID', 'SEQ_CTR', 'Google_URL',
+    #                 'AWS_URL', 'Calcium_GUID', 'Helium_GUID', 'DOS_URI',
+    #                 'CRAI_URL', 'md5sum', 'File size',
+    #                 'Calcium_realigned_md5sum', 'Argon_GUID'],
+    #     's3_name': 'AWS_URL',
+    #     'extras': {'Assignment': 'Downsample'}
+    # },
+    'gtex': {
+        'filename': 'gtex-wgs.tsv',
+        'columns': ['GTEX_ID', 'File_Name', 'Google_URL', 'AWS_URL',
+                    'Argon_GUID', 'Calcium_GUID', 'Helium_GUID', 'Xenon_GUID',
+                    'DOS_URI', 'md5sum', 'File size', 'Assignment'],
+        'bucket': 'nih-nhgri-datacommons',
+        'bucket_s3_prefix': 's3://nih-nhgri-datacommons/',
         's3_name': 'AWS_URL',
-        'extras': {'Assignment': 'Downsample'}
+        'options': {'protected': True}
     }
 
 }
@@ -62,13 +72,15 @@ def get_topmed_s3_file_info(bucket_name):
 def get_organized_records(sample_metadata):
     """Get records and set the record size from info in s3 buckets"""
     topmed_records = parse_topmed(sample_metadata)
-    s3info = get_topmed_s3_file_info(sample_metadata['bucket'])
+    if not sample_metadata.get('options', {}).get('protected'):
+        s3info = get_topmed_s3_file_info(sample_metadata['bucket'])
     s3_name = sample_metadata['s3_name']
 
     for rec in topmed_records:
         # Get the size so we can generate remote file manifests
         s3_filename = os.path.basename(rec[s3_name])
-        rec['size'] = s3info[s3_filename]['Size']
+        if not rec.get('File size'):
+            rec['size'] = s3info[s3_filename]['Size']
 
         # Set the minid field if it doesn't exist
         rec['Argon_GUID'] = rec.get('Argon_GUID', '')
@@ -77,11 +89,11 @@ def get_organized_records(sample_metadata):
             rec['S3_URL'] = rec[s3_name]
 
 
-    record_ids = {r['NWD_ID'] for r in topmed_records}
+    record_ids = {r['GTEX_ID'] for r in topmed_records}
     collected_records = []
     for rid in record_ids:
         collected_records.append([r for r in topmed_records
-                                 if r['NWD_ID'] == rid])
+                                 if r['GTEX_ID'] == rid])
 
     rfms = [get_remote_file_manifests(r, sample_metadata)
             for r in collected_records]
@@ -97,16 +109,16 @@ def get_remote_file_manifests(record, sample_metadata):
     :param record:
     :return:
     """
-    s3_prefix = sample_metadata['bucket_s3_prefix']
-    http_prefix = sample_metadata['bucket_http_prefix']
-    s3_name = sample_metadata['s3_name']
+    # s3_prefix = sample_metadata['bucket_s3_prefix']
+    # http_prefix = sample_metadata['bucket_http_prefix']
+    # s3_name = sample_metadata['s3_name']
     rfms = []
     for file_info in record:
-        file_path = file_info[s3_name].replace(s3_prefix, '')
+        # file_path = file_info[s3_name].replace(s3_prefix, '')
         d = {
-            'url': '{}{}'.format(http_prefix, file_path),
-            'length': file_info['size'],
-            'filename': os.path.basename(file_path),
+            'url': file_info['AWS_URL'],
+            'length': file_info['File size'],
+            'filename': file_info['File_Name'],
             'md5': file_info['md5sum']
         }
         for v in d.values():

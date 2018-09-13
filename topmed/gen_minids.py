@@ -4,10 +4,10 @@ import csv
 from concierge.api import bag_create
 from login import load_tokens, CONCIERGE_SCOPE_NAME
 
-PRODUCTION_MINIDS = True
+PRODUCTION_MINIDS = False
 # Limit minid creation to this number Only. set to '0' to turn off limiting.
 LIMIT_NUMBER = 0
-SAMPLE_TYPE = 'topmed'
+SAMPLE_TYPE = 'gtex'
 
 
 def update_topmed_tsv(minids, sample_metadata):
@@ -16,7 +16,7 @@ def update_topmed_tsv(minids, sample_metadata):
     s3_url = sample_metadata['s3_name']
     cols = sample_metadata['columns']
     S3_URL, ARGON_GUID = cols.index(s3_url), cols.index('Argon_GUID')
-    NWD_ID = cols.index('NWD_ID')
+    GTEX_ID = cols.index('GTEX_ID')
 
     rows = []
     with open(f) as t:
@@ -24,16 +24,16 @@ def update_topmed_tsv(minids, sample_metadata):
         for row in tin:
             # Non-s3 links aren't real records, ignore them.
             if row[S3_URL].startswith('s3://'):
-                minid = minids.get(row[NWD_ID], '')
+                minid = minids.get(row[GTEX_ID], '')
                 if minid:
                     if len(row) < ARGON_GUID:
                         print('Appending "{}" for "{}"'.format(
-                              minid, row[NWD_ID]
+                              minid, row[GTEX_ID]
                         ))
                         row.append(minid)
                     else:
                         print('Replacing "{}" with "{}" for {}'.format(
-                              row[ARGON_GUID], minid, row[NWD_ID]))
+                              row[ARGON_GUID], minid, row[GTEX_ID]))
                         row[ARGON_GUID] = minid
             rows.append(row)
 
@@ -90,10 +90,12 @@ def rebase_topmed(theirs_filename, ours):
 
 def main():
     data = get_data()
+    data = [d for d in data if d[0][0]['Assignment'] == 'Argon']
     if LIMIT_NUMBER is not 0:
         data = data[0:LIMIT_NUMBER]
     print('Settings: \n\tUse Production Minids? {}'.format(PRODUCTION_MINIDS))
     print('\tLimit Creation to: {}'.format(LIMIT_NUMBER or 'No Limit'))
+    print('\tFiltering on: Assignment=Argon'.format(LIMIT_NUMBER or 'No Limit'))
     user_input = input('Create {} new minids? Y/N> '.format(len(data)))
     if user_input not in ['yes', 'Y', 'y', 'yarr']:
         print('Aborting!')
@@ -104,18 +106,18 @@ def main():
     minids = {}
     for d in data:
         record, manifest = d
-        nwd_id = record[0]['NWD_ID']
-        hm_id = record[0]['HapMap_1000G_ID']
+        gtex_id = record[0]['GTEX_ID']
+        # hm_id = record[0]['HapMap_1000G_ID']
         if record[0]['Assignment'] == 'Downsample':
-            title = 'Topmed Downsample NWD-ID {}'.format(nwd_id)
-            bag_name = 'Topmed_Downsample_NWD_ID_{}'.format(nwd_id)
+            title = 'Topmed Downsample NWD-ID {}'.format(gtex_id)
+            bag_name = 'Topmed_Downsample_NWD_ID_{}'.format(gtex_id)
         else:
-            title = 'Topmed Public NWD-ID {}'.format(nwd_id)
-            bag_name = 'Topmed_Public_NWD_ID_{}'.format(nwd_id)
+            title = '{}'.format(gtex_id)
+            bag_name = '{}'.format(gtex_id)
         minid = gen_bdbag(manifest, title, bag_name)
         print('.', end='')
         sys.stdout.flush()
-        minids[nwd_id] = minid['minid']
+        minids[gtex_id] = minid['minid']
     print('\n')
     update_topmed_tsv(minids, SAMPLES[SAMPLE_TYPE])
 
