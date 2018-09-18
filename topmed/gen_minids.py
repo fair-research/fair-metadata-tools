@@ -1,13 +1,23 @@
 from gen_records import get_data, SAMPLES
 import sys
 import csv
+import json
 from concierge.api import bag_create
+from globus_sdk import AccessTokenAuthorizer
+from identifier_client.identifier_api import IdentifierClient
+
 from login import load_tokens, CONCIERGE_SCOPE_NAME
+
 
 PRODUCTION_MINIDS = False
 # Limit minid creation to this number Only. set to '0' to turn off limiting.
-LIMIT_NUMBER = 0
+LIMIT_NUMBER = 1
 SAMPLE_TYPE = 'gtex'
+
+IDENTIFIER_API = 'https://identifiers.globus.org/'
+TEST_IDENTIFIER_NAMESPACE = 'HHxPIZaVDh9u'
+IDENTIFIER_NAMESPACE = 'kHAAfCby2zdn'
+# Access token supplied in ~/.globus_identifier
 
 
 def update_topmed_tsv(minids, sample_metadata):
@@ -52,6 +62,35 @@ def gen_bdbag(remote_file_manifest, title, bag_name):
                        # server='http://localhost:8000'
                        )
     return minid
+
+
+def gen_minid(remote_file_manifest):
+
+    tokens = load_tokens()
+
+    ic = IdentifierClient(
+        'Identifier',
+        base_url=IDENTIFIER_API,
+        app_name='Fair Metadata Minid Minter Tool',
+        authorizer=AccessTokenAuthorizer(tokens['identifiers.globus.org']['access_token'])
+    )
+
+    kwargs = {
+        'visible_to': ['public'],
+        'location': [remote_file_manifest['url']],
+        'checksums': [{
+            'function': 'md5',
+            'value': remote_file_manifest['md5']
+        }],
+        'metadata': {
+            'title': remote_file_manifest['filename']
+        }
+    }
+
+    json_kwargs = {k: json.dumps(v) for k, v in kwargs.items()}
+    json_kwargs['namespace'] = IDENTIFIER_NAMESPACE if PRODUCTION_MINIDS else TEST_IDENTIFIER_NAMESPACE
+    minid = ic.create_identifier(**json_kwargs)
+    return minid.data['identifier']
 
 
 def rebase_topmed(theirs_filename, ours):
@@ -106,20 +145,14 @@ def main():
     minids = {}
     for d in data:
         record, manifest = d
-        gtex_id = record[0]['GTEX_ID']
-        # hm_id = record[0]['HapMap_1000G_ID']
-        if record[0]['Assignment'] == 'Downsample':
-            title = 'Topmed Downsample NWD-ID {}'.format(gtex_id)
-            bag_name = 'Topmed_Downsample_NWD_ID_{}'.format(gtex_id)
-        else:
-            title = '{}'.format(gtex_id)
-            bag_name = '{}'.format(gtex_id)
-        minid = gen_bdbag(manifest, title, bag_name)
+        min_crai, min_cram = gen_minid(manifest[0]), gen_minid(manifest[1])
+        minids[manifest[0]['filename']] = min_crai
+        minids[manifest[1]['filename']] = min_cram
+        print('Crai {}, cram {}'.format(min_crai, min_cram))
         print('.', end='')
         sys.stdout.flush()
-        minids[gtex_id] = minid['minid']
     print('\n')
-    update_topmed_tsv(minids, SAMPLES[SAMPLE_TYPE])
+    # update_topmed_tsv(minids, SAMPLES[SAMPLE_TYPE])
 
 
 if __name__ == '__main__':

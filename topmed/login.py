@@ -5,7 +5,9 @@ CLIENT_ID = '61f6ddd6-ef14-4a3b-b6fa-cfbdbc2e00de'
 CONCIERGE_SCOPE_NAME = '524361f2-e4a9-4bd0-a3a6-03e365cac8a9'
 SCOPES = ['https://auth.globus.org/scopes/'
           '524361f2-e4a9-4bd0-a3a6-03e365cac8a9/concierge',
-          'urn:globus:auth:scope:search.api.globus.org:all']
+          'urn:globus:auth:scope:search.api.globus.org:all',
+          'https://auth.globus.org/scopes/identifiers.globus.org/create_update',
+          ]
 TEMP_CREDS = 'search_ingest_tokens.json'
 
 
