@@ -47,6 +47,14 @@ There are two namespaces for Minids in the Globus Identifier Service
 You can mint in either one, but please only use the Production Minids if you are sure you are going
 to use them! Please use the test namespace for testing your scripts!
 
+### Scopes
+
+The Globus Identifier Service provides the following scopes:
+
+* https://auth.globus.org/scopes/identifiers.globus.org/create_update
+
+See `login.py` for how to use this in order to get tokens.
+
 ## Calling into the Python SDK
 
 It's also possible to call into the Identifier Client SDK if you are writing a python script. It
@@ -54,8 +62,7 @@ is built on and functions very much like the Globus SDK.
 
     # The IdentifierClient class is used for all operations
     from identifier_client.identifier_api import IdentifierClient
-    # You must specify the `base_url`.
-    # If you are unfamiliar with Globus Tokens, see login.py
+    # You must specify the `base_url`
     ic = IdentifierClient('Identifier',
                       base_url='https://identifiers.globus.org/',
                       app_name='My Local App',
