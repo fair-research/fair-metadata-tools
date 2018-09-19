@@ -11,11 +11,16 @@ many extra futures not used by minid.
 The CLI is not currently public, please ask Argon to grant you permission for
 usage. The client can be found [here](https://github.com/globusonline/globus-identifier-client)
 
-** The CLI requires Python 3 **
+#### Setup Your Environment
+
+    $ virtualenv -p python3 venv # python 3 is required for the globus-identifier-client
+    $ source venv/bin/activate
+
+#### Install The Client
 
 If you have ssh setup, you can run the following:
 
-    pip install -U -e git+git@github.com:globusonline/globus-identifier-client.git#egg=globus-identifier-client
+    $ pip install -U globus-sdk -e git+git@github.com:globusonline/globus-identifier-client.git#egg=globus-identifier-client
 
 ### Usage
 
