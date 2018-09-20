@@ -54,40 +54,6 @@ def gen_bdbag(remote_file_manifest, title, bag_name):
     return minid
 
 
-def rebase_topmed(theirs_filename, ours):
-
-    """Apply new minid changes to a diffing topmed file from our own"""
-    with open(ours) as otf, open(theirs_filename) as ttf:
-        our_tsv = csv.reader(otf, delimiter='\t')
-        their_tsv = csv.reader(ttf, delimiter='\t')
-        ourrows = [r for r in our_tsv]
-        theirrows = [r for r in their_tsv]
-
-
-        if len(ourrows) != len(theirrows):
-            print('Lines in files differ -- Ours: {} theirs: {}'.format(
-                len(ourrows), len(theirrows)
-            ))
-            return
-
-        output_rows = []
-        changed = 0
-        for ourr, theirr in zip(ourrows, theirrows):
-            if ourr[ARGON_GUID].startswith('ark') and \
-               ourr[ARGON_GUID] != theirr[ARGON_GUID]:
-
-                theirr[ARGON_GUID] = ourr[ARGON_GUID]
-                print('.', end='')
-                changed += 1
-            output_rows.append(theirr)
-        print('\nRecords Changed: {}'.format(changed))
-
-    with open('rebased_topmed.tsv', 'w') as t:
-        tout = csv.writer(t, delimiter='\t', lineterminator='\n')
-        for row in output_rows:
-            tout.writerow(row)
-
-
 def main():
     data = get_data()
     if LIMIT_NUMBER is not 0:
