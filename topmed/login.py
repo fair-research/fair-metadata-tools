@@ -7,6 +7,9 @@ SCOPES = ['https://auth.globus.org/scopes/'
           '524361f2-e4a9-4bd0-a3a6-03e365cac8a9/concierge',
           'urn:globus:auth:scope:search.api.globus.org:all',
           'https://auth.globus.org/scopes/identifiers.globus.org/create_update',
+          'https://auth.globus.org/scopes/'
+                    'ebcaf30d-8148-4f1b-992a-bd089f823ac7/workspace_manager',
+          'urn:globus:auth:scope:transfer.api.globus.org:all',
           ]
 TEMP_CREDS = 'search_ingest_tokens.json'
 
