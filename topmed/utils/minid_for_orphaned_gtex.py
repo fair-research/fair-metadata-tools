@@ -30,7 +30,10 @@ MINT_PROD = True
 # BLACKLISTED_MINIDS = ['ark:/57799/b9SJXtVUT6uTJC', 'ark:/57799/b9NJMc7oAPyVep']
 # BLACKLISTED_GTEXID = ['GTEX-XBEC-0002-SM-5SOEV', 'GTEX-XXEK-0001-SM-5JK35']
 BLACKLISTED_BAGS = [
-    '15375053062719_1_15375154087375.outputs.bdbag.zip'
+    '15375053062719_1_15375154087375.outputs.bdbag.zip',
+    '15374773294289_1_15376451019030.outputs.bdbag.zip',
+    '15375055772427_1_15375376939148.outputs.bdbag.zip',
+
 ]
 
 def get_input_minids():
@@ -49,7 +52,9 @@ def get_gtex_ws_workspaces():
 
     ws_tok = tokens['fair_research_data_portal']['access_token']
     headers = {'Authorization': 'Bearer {}'.format(ws_tok)}
-    workspaces = requests.get(WORKSPACE_API, headers=headers).json()
+    r = requests.get(WORKSPACE_API, headers=headers)
+    r.raise_for_status()
+    workspaces = r.json()
     gwork = [w for w in workspaces
              if w['metadata'].get('data_id', '').startswith('GTEX')]
     gtex_tasks = [w for w in gwork
