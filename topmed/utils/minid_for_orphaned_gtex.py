@@ -18,13 +18,13 @@ BAG_DIR = 'bags'
 MINT_PROD = True
 # File to grab input minids and GTEX IDs. See:
 # https://github.com/dcppc/full-stacks/blob/master/gtex-wgs.tsv
-INPUT_FILE = '../gtex-rnaseq.tsv'
+INPUT_FILE = '../gtex-wgs.tsv'
 MINID_KEY = 'Argon_GUID'
 # Not currently used. Current location of bags
 # BAGS_EP = '898e3aae-b8a3-4be2-993b-1cf30c663b84'
 WORKSPACE_API = 'https://globus-portal.fair-research.org/4M.4.Fullstacks/' \
                 'api/v1/workspaces/'
-OUTPUT_CSV = 'gtex-rnaseq-argon-results.csv'
+OUTPUT_CSV = 'gtex-wgs-argon-results.csv'
 CSV_HEADERS = ['gtexid', 'input', 'output', 'size', 'md5', 'location']
 
 MINID_TEST = 'HHxPIZaVDh9u'

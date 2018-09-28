@@ -1,0 +1,11 @@
+*.DS_Store
+*.idea/
+*__pycache__/
+*.gitattributes
+*.swp
+*venv/
+
+# Project Specific
+*search_ingest_tokens.json
+topmed/data/
+topmed/utils/bags/
