@@ -2,17 +2,12 @@ import sys
 import csv
 from gen_records import SAMPLES
 
-UPDATE = 'topmed'
 MINID_KEY = 'Argon_GUID'
 
 
-def rebase_topmed(sample_name, new_file, keyname='Argon_GUID'):
-
-    oldf = SAMPLES[sample_name]['filename']
-
-
+def rebase_topmed(old_file, new_file, keyname='Argon_GUID'):
     """Apply new minid changes to a diffing topmed file from our own"""
-    with open(new_file) as newfd, open(oldf) as oldfd:
+    with open(new_file) as newfd, open(old_file) as oldfd:
         new_tsv = csv.reader(newfd, delimiter='\t')
         old_tsv = csv.reader(oldfd, delimiter='\t')
         new_rows = [r for r in new_tsv]
@@ -25,7 +20,7 @@ def rebase_topmed(sample_name, new_file, keyname='Argon_GUID'):
             ))
             return
 
-        oldh = get_headers(old_rows, keyname, oldf)
+        oldh = get_headers(old_rows, keyname, old_file)
         newh = get_headers(new_rows, keyname, new_file)
         if len(oldh) != len(newh):
             print('Headers differ between {} and {}!'.format(oldf, new_file))
@@ -42,20 +37,23 @@ def rebase_topmed(sample_name, new_file, keyname='Argon_GUID'):
 
             if oldr[oldkey].startswith('ark') and oldr[oldkey] != newr[newkey]:
                 print('U', end='')
-                oldr[oldkey] = newr[newkey]
+                newr[newkey] = oldr[oldkey]
                 changed += 1
-            elif not oldr[oldkey]:
-                print('A', end='')
-                oldr[oldkey] = newr[newkey]
-                changed += 1
+            # elif not newr[newkey]:
+            #     print('A', end='')
+            #     newr[newkey] = oldr[oldkey]
+            #     changed += 1
             else:
                 print('.', end='')
 
-            output_rows.append(oldr)
-        print('\nRecords Changed: {}'.format(changed))
+            output_rows.append(newr)
+        print('\nRecords Changed: {}\n'
+              '\tU: Updated\n\tA: Did not exist, added now.\n'
+              '\t.: Not changed'.format(changed))
 
-    ask = input('Update {}?'.format(oldf)).strip()
-    outf = oldf if ask in ['y', 'Y', 'yes', 'yarr'] else 'rebased_topmed.tsv'
+    ask = input('Update {}?'.format(new_file)).strip()
+    affirmative = ['y', 'Y', 'yes', 'yarr']
+    outf = new_file if ask in affirmative else 'rebased_topmed.tsv'
 
     with open(outf, 'w') as t:
         tout = csv.writer(t, delimiter='\t', lineterminator='\n')
@@ -74,8 +72,8 @@ def get_headers(tsv_rows, keyname, filename=''):
 
 
 if __name__ == '__main__':
-    if len(sys.argv) != 2:
-        print('Add a single argument for the file you want to use to update '
-              '"{}"'.format(SAMPLES[UPDATE]['filename']))
+    if len(sys.argv) != 3:
+        print('Usage: {} FILE_CONTAINING_YOUR_INFO FILE_TO_UPDATE'
+              ''.format(sys.argv[0]))
     else:
-        rebase_topmed('topmed', sys.argv[1])
+        rebase_topmed(sys.argv[1], sys.argv[2])
