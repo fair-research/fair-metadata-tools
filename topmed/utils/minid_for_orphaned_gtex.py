@@ -2,9 +2,7 @@ import requests
 import csv
 import sys
 import os
-from pprint import pprint
 from bdbag import bdbag_api
-import bagit
 import hashlib
 import json
 from globus_sdk import AccessTokenAuthorizer
@@ -14,27 +12,32 @@ from identifier_client.identifier_api import IdentifierClient
 sys.path.insert(0, '..')
 from login import load_tokens
 
+# The local directory with all BDbag archived output
+BAG_DIR = 'bags'
+# Create Production Minids? Test Minids if False
+MINT_PROD = True
+# File to grab input minids and GTEX IDs. See:
+# https://github.com/dcppc/full-stacks/blob/master/gtex-wgs.tsv
 INPUT_FILE = '../gtex-rnaseq.tsv'
 MINID_KEY = 'Argon_GUID'
-BAGS_EP = '898e3aae-b8a3-4be2-993b-1cf30c663b84'
+# Not currently used. Current location of bags
+# BAGS_EP = '898e3aae-b8a3-4be2-993b-1cf30c663b84'
 WORKSPACE_API = 'https://globus-portal.fair-research.org/4M.4.Fullstacks/' \
                 'api/v1/workspaces/'
-BAG_DIR = 'bags'
 OUTPUT_CSV = 'gtex-rnaseq-argon-results.csv'
 CSV_HEADERS = ['gtexid', 'input', 'output', 'size', 'md5', 'location']
 
 MINID_TEST = 'HHxPIZaVDh9u'
 MINID_PROD = 'kHAAfCby2zdn'
-MINT_PROD = True
 
-# BLACKLISTED_MINIDS = ['ark:/57799/b9SJXtVUT6uTJC', 'ark:/57799/b9NJMc7oAPyVep']
-# BLACKLISTED_GTEXID = ['GTEX-XBEC-0002-SM-5SOEV', 'GTEX-XXEK-0001-SM-5JK35']
+# Bags that errored out and are invalid. They will match the GTEX IDs for
+# next runs, so this script will know to use those bags and ignore these.
 BLACKLISTED_BAGS = [
     '15375053062719_1_15375154087375.outputs.bdbag.zip',
     '15374773294289_1_15376451019030.outputs.bdbag.zip',
     '15375055772427_1_15375376939148.outputs.bdbag.zip',
-
 ]
+
 
 def get_input_minids():
     with open(INPUT_FILE) as fh:
