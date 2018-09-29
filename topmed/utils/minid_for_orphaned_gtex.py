@@ -173,7 +173,7 @@ def mint_minid(file_info):
             'value': file_info['md5']
         }],
         'metadata': {
-            'Title': 'TOPMED workflow output results for {}.recab.cram'
+            'Title': 'CRAM Alignment file for GTEx Sample {}.recab.cram'
                      ''.format(file_info['id']),
             'contentSize': file_info['size']
         }
