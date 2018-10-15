@@ -46,7 +46,7 @@ def parse_topmed(sample):
 
         # Remove all non-real records by checking that the s3 link looks valid
         filtered_info = [item for item in tsv_info
-                         if item[s3_name].startswith('s3://')]
+                         if item.get(s3_name, '').startswith('s3://')]
         return filtered_info
 
 
